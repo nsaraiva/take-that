@@ -1,39 +1,84 @@
 use std::env;
 
 fn main() {
-    // env::args() retorna um iterator com os argumentos da linha de comando.
-    // O primeiro item (índice 0) é sempre o nome/caminho do executável.
     let args: Vec<String> = env::args().collect();
 
+    // Se só passou o nome do programa, mostra o uso
     if args.len() == 1 {
-        println!("Uso: {} <argumento1> [argumento2] ...", args[0]);
+        println!("Uso: {} [-X <METODO>]", args[0]);
+        println!("Métodos: GET, POST, PUT, PATCH, DELETE");
         return;
     }
 
-    let mut fields: Vec<(String, String)> = Vec::new();
+    // Valor padrão: GET
+    let mut request_type = "GET";
 
-    // Default args
-    let mut delivery_type = "body";
+    let mut url = "";
+    let mut path = "";
+    let mut header = "";
+    let mut data = "";
 
-    println!("Foram passados {} argumento(s):", args.len() - 1);
+    // Começa no índice 1 para pular o nome do programa (índice 0)
+    let mut i = 1;
 
-    // skip(1) ignora o nome do programa; enumerate() numera a partir de 1.
-    for arg in args.iter().skip(1) {
-        match arg.as_str() {
-            "-b" | "--body" => delivery_type = "body",
-            "-q" | "--query" => delivery_type = "query",
-            _ => {
-                if let Some((field, value)) = arg.split_once('=') {
-                    fields.push((field.to_string(), value.to_string()));
+    while i < args.len() {
+        match args[i].as_str() {
+            "-X" => {
+                // Verifica se existe um próximo argumento após o -X
+                if i + 1 < args.len() {
+                    request_type = &args[i + 1];
+                    i += 2; // pula o -X e o método
                 } else {
-                    println!("Unknown argument: {}", arg);
+                    println!("Erro: -X requer um método (POST, PUT, PATCH, DELETE)");
+                    return;
                 }
+            }
+            "-u" => {
+                if i + 1 < args.len() {
+                    url = &args[i + 1];
+                    i += 2; // pula o -u e o valor da URL
+                } else {
+                    println!("Erro: -u requer uma URL");
+                    return;
+                }
+            }
+            "-w" => {
+                if i + 1 < args.len() {
+                    path = &args[i + 1];
+                    i += 2; // pula o -w e o valor do path
+                } else {
+                    println!("Erro: -w requer um path");
+                    return;
+                }
+            }
+            "-H" => {
+                if i + 1 < args.len() {
+                    header = &args[i + 1];
+                    i += 2; // pula o -H e o valor do header
+                } else {
+                    println!("Erro: -H requer um header");
+                    return;
+                }
+            }
+            "-d" => {
+                if i + 1 < args.len() {
+                    data = &args[i + 1];
+                    i += 2; // pula o -d e o valor do data
+                } else {
+                    println!("Erro: -d requer um data");
+                    return;
+                }
+            }
+            _ => {
+                println!("Erro: argumento desconhecido {}", args[i]);
+                return;
             }
         }
     }
-    println!("Delivery: {}", delivery_type);
-    println!("Campos ({}):", fields.len());
-    for (campo, valor) in &fields {
-        println!("  {} = {}", campo, valor);
-    }
+
+    println!("Request: {}", request_type);
+    println!("URL: {}", url);
+    println!("Header: {}", header);
+    println!("Data: {}", data);
+    println!("Wordlist: {}", path);
 }
