@@ -5,80 +5,125 @@ fn main() {
 
     // Se só passou o nome do programa, mostra o uso
     if args.len() == 1 {
-        println!("Uso: {} [-X <METODO>]", args[0]);
+        println!("Uso: {} [-X <METHOD>]", args[0]);
         println!("Métodos: GET, POST, PUT, PATCH, DELETE");
         return;
     }
 
-    // Valor padrão: GET
-    let mut request_type = "GET";
+    // Default request method: GET
+    let mut method = "GET";
 
     let mut url = "";
     let mut path = "";
     let mut header = "";
     let mut data = "";
 
-    // Começa no índice 1 para pular o nome do programa (índice 0)
+    // Start at index 1 to skip the program name (index 0)
     let mut i = 1;
 
     while i < args.len() {
         match args[i].as_str() {
             "-X" => {
-                // Verifica se existe um próximo argumento após o -X
+                // Verify if there is a next argument after -X
                 if i + 1 < args.len() {
-                    request_type = &args[i + 1];
-                    i += 2; // pula o -X e o método
+                    method = &args[i + 1];
+
+                    i += 2; // skip the -X and the method
                 } else {
-                    println!("Erro: -X requer um método (POST, PUT, PATCH, DELETE)");
+                    println!("Error: -X requires a method (POST, PUT, PATCH, DELETE)");
                     return;
                 }
             }
             "-u" => {
                 if i + 1 < args.len() {
                     url = &args[i + 1];
-                    i += 2; // pula o -u e o valor da URL
+
+                    i += 2; // skip the -u and the URL value
                 } else {
-                    println!("Erro: -u requer uma URL");
+                    println!("Error: -u requires a URL");
                     return;
                 }
             }
             "-w" => {
                 if i + 1 < args.len() {
                     path = &args[i + 1];
-                    i += 2; // pula o -w e o valor do path
+
+                    i += 2; // skip the -w and the path value
                 } else {
-                    println!("Erro: -w requer um path");
+                    println!("Error: -w requires a path");
                     return;
                 }
             }
             "-H" => {
                 if i + 1 < args.len() {
                     header = &args[i + 1];
-                    i += 2; // pula o -H e o valor do header
+
+                    i += 2; // skip the -H and the header value
                 } else {
-                    println!("Erro: -H requer um header");
+                    println!("Error: -H requires a header");
                     return;
                 }
             }
             "-d" => {
                 if i + 1 < args.len() {
                     data = &args[i + 1];
-                    i += 2; // pula o -d e o valor do data
+
+                    i += 2; // skip the -d and the data value
                 } else {
-                    println!("Erro: -d requer um data");
+                    println!("Error: -d requires data");
                     return;
                 }
             }
             _ => {
-                println!("Erro: argumento desconhecido {}", args[i]);
+                //println!("Error: unknown argument {}", args[i]);
                 return;
             }
         }
     }
 
-    println!("Request: {}", request_type);
+    println!("Request: {}", method);
     println!("URL: {}", url);
     println!("Header: {}", header);
     println!("Data: {}", data);
-    println!("Wordlist: {}", path);
+    println!("Word list: {}", path);
+
+    let words = read_wordlist(path);
+    for word in words {
+        let new_data = data.replace("TAKE", &word);
+
+        let response = match method {
+            "GET" => ureq::get(url).call(),
+            "POST" => ureq::post(url).send_string(&new_data),
+            "PUT" => ureq::put(url).send_string(&new_data),
+            "PATCH" => ureq::patch(url).send_string(&new_data),
+            "DELETE" => ureq::delete(url).call(),
+            _ => {
+                println!("Method not supported: {}", method);
+                return;
+            }
+        };
+
+        match response {
+            Ok(res) => {
+                println!("Status: {}", res.status());
+            }
+            Err(e) => println!("Request error: {}", e),
+        }
+    }
+}
+
+#[allow(clippy::lines_filter_map_ok)]
+fn read_wordlist(path: &str) -> Vec<String> {
+    use std::fs::File;
+    use std::io::{self, BufRead};
+    use std::path::Path;
+
+    let mut words: Vec<String> = Vec::new();
+
+    if let Ok(file) = File::open(Path::new(path)) {
+        for word in io::BufReader::new(file).lines().flatten() {
+            words.push(word);
+        }
+    }
+    words
 }

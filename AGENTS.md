@@ -1,6 +1,6 @@
-# take-this
+# take-that
 
-Single-binary Rust crate (package `take-this`, edition 2024). Entry point: `src/main.rs`. No dependencies, no tests, no CI.
+Single-binary Rust crate (package `take-that`, edition 2024). Entry point: `src/main.rs`. No dependencies, no tests, no CI.
 
 ## Escopo
 
